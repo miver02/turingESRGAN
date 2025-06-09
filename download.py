@@ -54,19 +54,20 @@ def download_file(url, filename, description=""):
     print(f"URL: {url}")
     
     try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
+        response = requests.get(url, stream=True) # stream=True表示流式下载(分块读取数据),而非一次性加载所有文件到内存中,适合大文件下载
+        response.raise_for_status() # 检查响应状态码,如果是4xx或者5xx,会抛出HttpError异常,终止下载流程
         
-        total_size = int(response.headers.get('content-length', 0))
+        total_size = int(response.headers.get('content-length', 0)) # 从响应头中获取文件总大小,用于计算下载进度;如果服务器未提供该信息,则默认为0(此时进度条可能无法正常显示)
         
         with open(filename, 'wb') as file, tqdm(
+            # 进度条配置
             desc=filename,
             total=total_size,
             unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
+            unit_scale=True, # 自动转换单位
+            unit_divisor=1024, # 单位转换采用 1024 进制
         ) as pbar:
-            for chunk in response.iter_content(chunk_size=8192):
+            for chunk in response.iter_content(chunk_size=8192): # 按快读取响应数据,每块大小为8kb   
                 if chunk:
                     file.write(chunk)
                     pbar.update(len(chunk))
